@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<!-- Haxchi or Mocha -->
+<!-- Cobbled together by pwsincd -->
+<!-- WiiUbrU -->
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+	<script defer src="https://use.fontawesome.com/releases/v5.0.2/js/all.js"></script>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Product+Sans">
+	<title>WiiU Package Selector</title>
+	<style>
+	body {
+		margin:0;
+		font-family: 'Product Sans', Arial, sans-serif;
+	}
+
+	/*navbar styling*/
+	.navbar {
+		overflow: hidden;
+		background-color: #333;
+		position: absolute;
+		top: 0;
+		width: 99%;
+	}
+
+	.navbar a {
+		float: left;
+		display: block;
+		color: #f2f2f2;
+		text-align: center;
+		padding: 14px 16px;
+		text-decoration: none;
+		font-size: 17px;
+	}
+
+	.navbar a:hover {
+		background: #ddd;
+		color: black;
+	}
+	.navbar a:focus {
+		background: #ddd;
+		color: black;
+	}
+	.wrap {
+		width: 100%;
+		overflow:auto;
+	}
+	.main {
+		background:#ddd;
+		height:1500px;
+		float:left; 
+		width: 30%;
+		margin-top:48px;
+		text-align: left;
+		padding-top: 20px;
+		padding-left: 15px;
+
+	}
+	.info {
+		float: left;
+		background:#333;
+		height:1500px;
+		width: 68%;
+		margin-top:48px;
+		padding-top: 20px;
+		border-top: 1px solid #ddd;
+	}
+	/*checkbox styling*/
+	label{
+		display: inline-block;
+		word-break: break-all;
+	}
+
+	input[type='checkbox'] {
+		vertical-align: top;
+		display: inline-block;
+		margin: 0 auto;
+		margin-bottom: 10px;
+		-webkit-appearance: button;
+		border:none;
+		background-color: #ccc;
+		width: 45px;
+		height: 20px;
+		border-radius: 3px;
+		box-shadow: inset 0 1px 4px rgba(0,0,0,.2);
+		cursor: pointer;
+		position: relative;
+		transition: background-color 1s;
+	}
+	input[type='checkbox'].error{
+		background-color: #c63d3d;
+	}
+	input[type='checkbox']:after{
+		content: "";
+		display: block;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 45%;
+		height: 80%;
+		background-color: #fdfdfd;
+		margin: 4%;
+		border-radius: 3px;
+		box-shadow: 0 1px 2px rgba(0,0,0,.2);
+
+		background: rgb(255,255,255);
+		background: -moz-linear-gradient(top,  rgba(255,255,255,1) 0%, rgba(243,243,243,1) 100%);
+		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,1)), color-stop(100%,rgba(243,243,243,1)));
+		background: -webkit-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(243,243,243,1) 100%);
+		background: -o-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(243,243,243,1) 100%);
+		background: -ms-linear-gradient(top,  rgba(255,255,255,1) 0%,rgba(243,243,243,1) 100%);
+		background: linear-gradient(to bottom,  rgba(255,255,255,1) 0%,rgba(243,243,243,1) 100%);
+		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f3f3f3',GradientType=0 );
+
+		transition: .5s all;
+	}
+
+	input[type='checkbox']:checked{
+		background-color: #79d122;
+	} 
+
+	input[type='checkbox']:checked:after {
+		left: 45%;
+	}
+	.hoverinfo{
+		color:#f2f2f2;
+		text-align:center;
+	}
+	.infobutton{
+		float:right;
+		background-color: #333; /* Green */
+		border: 1px solid #ddd;
+		color: #ddd;
+		padding: 3px 3px;
+		text-align: center;
+		text-decoration: none;
+		display: inline-block;
+		font-size: 16px;
+		margin: 2px 2px;
+		cursor: pointer;
+	}
+	.infobutton:hover{
+		color:#333;
+		background-color: #ddd;
+		border: 1px solid #333;
+	}
+		.infobutton:focus{
+		outline: none !important;
+		color:#333;
+		background-color: #79d122;
+		border: 1px solid #ddd;
+	}
+	label:hover{
+		background-color:#c7c7c7;
+	}
+
+</style>
+</head>
+<body>
+	<!--NAVBAR content-->
+	<div class="navbar">
+		<a href="#" id="free" onclick = "populateData(this.id)"><i class="fas fa-gift"></i> FREE</a>
+		<a href="#" id="paid" onclick = "populateData(this.id)"><i class="far fa-credit-card"></i> PAID</a>
+		<a href="#" id="download" onclick = "check()"><i class="fas fa-cloud-download-alt"></i></i> DOWNLOAD</a>
+	</div>
+	<!--end of NAVBAR content-->
+	<!--Content set by JS-->
+	<div class = "wrap">
+		<div class="main" id="content"></div>
+		<div class="info" id="info"></div>
+	</div>
+
+	<script type="text/javascript">
+    //set variables
+    var targetDiv = document.getElementById('content');
+    var htmlContent = '';
+    // array of apps,used to parse against users chosen apps
+    var apps = [
+    {dir: "haxchi", binary: "haxchi.elf"},
+    {dir: "cbhc", binary: "cbhc.elf"},                  
+    {dir: "mocha", binary: "mocha.elf"},
+    {dir: "wup_installer_gx2", binary: "wup_installer_gx2.elf"},
+    {dir: "homebrew_launcher", binary: "homebrew_launcher.elf"},
+    {dir: "appstore", binary: "hbas.elf"},
+    {dir: "nnupatcher", binary: "nnupatcher.elf"},
+    {dir: "savemii", binary: "savemii.elf"},
+    {dir: "disc2app", binary: "disc2app.elf"},
+    {dir: "swapdrc", binary: "swapdrc.elf"},
+    {dir: "nanddumper", binary: "nanddumper.elf"},
+    {dir: "SDcafiine", binary: "sdcafiine.elf"},
+    {dir: "hidtovpad", binary: "hidtovpad.elf"},
+    {dir: "HBLchannel", binary: "n/a"},
+    {dir: "WUPGX2channel", binary: "n/a"}
+    ];
+
+
+    //Function to populate the div content with selectable html
+    //options :
+    //add class="error" for red background
+    //add checked for preselected
+    //add disabled for a locked option
+    //NOTE : input id = directory name !important
+
+    function populateData(event){
+    	switch(event){
+        // HTML content for the FREE option
+        case 'free':{
+        	htmlContent = `<div>
+        	<input type="checkbox" id="haxchi" name="choice1" value="haxchi" class="error" disabled/>
+        	<label for="haxchi"> Haxchi</label>
+        	<button id="haxch" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="cbhc" name="choice1" value="cbhc" class="error" disabled/>
+        	<label for="cbhc"> Coldboot Haxchi (cbhc)</label>
+        	<button id="cbh" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="mocha" name="choice2" value="mocha" checked disabled/>
+        	<label for="mocha"> Mocha</label>
+        	<button id="moch" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="wup_installer_gx2" name="choice3" value="wup_installer_gx2" checked disabled/>
+        	<label for="wup_installer_gx2"> WUP Installer GX2</label>
+        	<button id="wigx2" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="WUPGX2channel" name="choice4" value="WUPGX2channel" checked disabled/>
+        	<label for="WUPGX2channel"> WUP Installer GX2 Channel</label>
+        	<button id="wigx2c" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="homebrew_launcher" name="choice5" value="homebrew_launcher" checked disabled/>
+        	<label for="homebrew_launcher"> Homebrew Launcher</label>
+        	<button id="hbl" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="HBLchannel" name="choice6" value="HBLchannel" checked disabled/>
+        	<label for="HBLchannel"> Homebrew Launcher Channel</label>
+        	<button id="hblc" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="appstore" name="choice7" value="appstore"/>
+        	<label for="appstore"> Homebrew Appstore</label>
+        	<button id="hbas" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="nnupatcher" name="choice8" value="nnupatcher"/>
+        	<label for="nnupatcher"> NNU Patcher</label>
+        	<button id="nnu" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="savemii" name="choice9" value="savemii"/>
+        	<label for="savemii"> SaveMii</label>
+        	<button id="savemi" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="disc2app" name="choice10" value="disc2app"/>
+        	<label for="disc2app"> Disc2app</label>
+        	<button id="d2a" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="swapdrc" name="choice11" value="swapdrc"/>
+        	<label for="swapdrc"> SwapDRC</label>
+        	<button id="drc" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="nanddumper" name="choice12" value="nanddumper"/>
+        	<label for="nanddumper"> WiiU Nand Dumper</label>
+        	<button id="nandd" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="SDcafiine" name="choice13" value="SDcafiine"/>
+        	<label for="SDcafiine"> SDcafiine</label>
+        	<button id="sdcaf" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	<input type="checkbox" id="hidtovpad" name="choice14" value="hidtovpad"/>
+        	<label for="hidtovpad"> HID to VPAD</label>
+        	<button id="h2v" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+        	<br>
+        	</div>`;
+        	break;
+        }
+       // HTML content for the PAID option
+       case 'paid':{
+       	htmlContent = `<div>
+       	<input type="checkbox" id="haxchi" name="choice1" value="haxchi" checked disabled/>
+       	<label for="haxchi"> Haxchi</label>
+       	<button id="haxch" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="cbhc" name="choice1" value="cbhc" checked disabled/>
+       	<label for="cbhc"> Coldboot Haxchi (cbhc)</label>
+       	<button id="cbh" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="mocha" name="choice2" value="mocha" class="error" disabled/>
+       	<label for="mocha"> Mocha</label>
+       	<button id="moch" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="wup_installer_gx2" name="choice3" value="wup_installer_gx2" checked disabled/>
+       	<label for="wup_installer_gx2"> WUP Installer GX2</label>
+       	<button id="wigx2" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="WUPGX2channel" name="choice4" value="WUPGX2channel" checked disabled/>
+       	<label for="WUPGX2channel"> WUP Installer GX2 Channel</label>
+       	<button id="wigx2c" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="homebrew_launcher" name="choice5" value="homebrew_launcher" checked disabled/>
+       	<label for="homebrew_launcher"> Homebrew Launcher</label>
+       	<button id="hbl" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="HBLchannel" name="choice6" value="HBLchannel" checked disabled/>
+       	<label for="HBLchannel"> Homebrew Launcher Channel</label>
+       	<button id="hblc" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="appstore" name="choice7" value="appstore"/>
+       	<label for="appstore"> Homebrew Appstore</label>
+       	<button id="hbas" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="nnupatcher" name="choice8" value="nnupatcher"/>
+       	<label for="nnupatcher"> NNU Patcher</label>
+       	<button id="nnu" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="savemii" name="choice9" value="savemii"/>
+       	<label for="savemii"> SaveMii</label>
+       	<button id="savemi" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="disc2app" name="choice10" value="disc2app"/>
+       	<label for="disc2app"> Disc2app</label>
+       	<button id="d2a" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="swapdrc" name="choice11" value="swapdrc"/>
+       	<label for="swapdrc"> SwapDRC</label>
+       	<button id="drc" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="nanddumper" name="choice12" value="nanddumper"/>
+       	<label for="nanddumper"> WiiU Nand Dumper</label>
+       	<button id="nandd" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="SDcafiine" name="choice13" value="SDcafiine"/>
+       	<label for="SDcafiine"> SDcafiine</label>
+       	<button id="sdcaf" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	<input type="checkbox" id="hidtovpad" name="choice14" value="hidtovpad"/>
+       	<label for="hidtovpad"> HID to VPAD</label>
+       	<button id="h2v" class="infobutton" type="button"><i class="fas fa-info-circle"></i></button>
+       	<br>
+       	</div>`;
+       	break;
+       }
+   }
+    //Display content
+    targetDiv.innerHTML = htmlContent;
+    //hover additional info
+    $("#haxch").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Haxchi</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/haxchi/icon.png"><br></div>');
+    });
+    $("#cbh").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>CBHC</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/cbhc/icon.png"><br></div>');
+    });
+    $("#moch").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Mocha</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/mocha/icon.png"><br></div>');
+    });
+    $("#wigx2").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>WUP Installer GX2</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/wup_installer_gx2/icon.png"><br></div>');
+    });
+    $("#wigx2c").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>WUP Installer Channel</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/wup_installer_gx2/icon.png"><br></div>');
+    });
+    $("#hbl").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Homebrew Launcher</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/homebrew_launcher/icon.png"><br></div>');
+    });
+    $("#hblc").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Homebrew Launcher Channel</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/homebrew_launcher/icon.png"><br></div>');
+    });
+    $("#hbas").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Homebrew Appstore</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/appstore/icon.png"><br></div>');
+    });
+    $("#nnu").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>NNU Patcher</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/nnupatcher/icon.png"><br></div>');
+    });
+    $("#savemi").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>SaveMii</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/savemii/icon.png"><br></div>');
+    });
+    $("#d2a").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Disc 2 App</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/disc2app/icon.png"><br></div>');
+    });
+    $("#drc").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>swapDRC</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/swapdrc/icon.png"><br></div>');
+    });
+    $("#nandd").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>Nand Dumper</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/nanddumper/icon.png"><br></div>');
+    });
+    $("#sdcaf").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>SD Cafiine</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/SDcafiine/icon.png"><br></div>');
+    });
+    $("#h2v").on('click', function() {
+    	$("#info").html('<div class="hoverinfo"><h2><b>HID to VPAD</b></h2><br><img src="https://www.wiiubru.com/appstore/apps/hidtovpad/icon.png"><br></div>');
+    });
+};
+  //Verify an option is chosen before download
+  //if true then write chosen apps to an array
+  //and pass array to PHP packager
+  function check(){
+  	if (htmlContent == "") {
+  		alert("CHOOSE PAID or FREE before you DOWNLOAD !!");
+  		return;
+  	}
+  	else
+  	{
+  		$("#download").click(function(event){
+  			event.preventDefault();
+  			var chosenapps = $("input:checkbox:checked").map(function(){
+  				return this.value;
+  			}).toArray();
+
+
+
+                //console.log(chosenapps); //debug chosen apps
+                //Populate a final array of files chosen and its directory
+                var cart = [];
+                for (var i = 0; i < apps.length ; i++) {
+                	for (var e = 0; e < chosenapps.length ; e++) {
+                		if (apps[i].dir == chosenapps[e]) {
+                			var appinfo = {};
+                			appinfo.dir = apps[i].dir;
+                			appinfo.binary = apps[i].binary;
+                			cart.push(appinfo);
+                		}  
+                	} 
+                }
+                //console.log(cart); // debug final array
+                        //pass array to server
+                        $.ajax({ 
+                        	type: "POST", 
+                        	url: "packager.php", 
+                        	data: {data: cart},
+                        	cache: false,
+                          //beforeSend: function() {
+                           // document.getElementById("processing").style.display = "block";
+                         // },
+                         // complete: function() {
+                         //   document.getElementById("processing").style.display = "none";
+                         // },
+                         success: function(response) { 
+                          document.location.href = (response);//returned zip file
+                      } 
+                  });
+                    })
+  	}
+  }
+</script>
+</body>
+</html>
+
+
